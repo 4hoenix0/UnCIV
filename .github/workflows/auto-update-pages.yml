@@ -46,7 +46,7 @@ jobs:
       - name: Upload Artifact to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'teavm/build/dist'
+          path: 'build/dist'
 
       - name: Deploy to GitHub Pages
         id: deployment

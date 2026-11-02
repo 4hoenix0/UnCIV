@@ -45,10 +45,18 @@ jobs:
 
       - name: Locate and Prepare Dist Directory
         run: |
-          DIST_PATH=$(find . -maxdepth 4 -type d -name "dist" | grep -v "\.gradle" | head -n 1)
-          echo "Found build output at: $DIST_PATH"
+          # Find the exact folder containing index.html
+          INDEX_PATH=$(find . -maxdepth 5 -name "index.html" | grep -v "\.gradle" | head -n 1)
+          DIST_DIR=$(dirname "$INDEX_PATH")
+          
+          echo "Found index.html at: $INDEX_PATH"
+          echo "Copying from directory: $DIST_DIR"
+          
           mkdir -p site_output
-          cp -r $DIST_PATH/* site_output/
+          cp -r "$DIST_DIR"/* site_output/
+          
+          # Prevent GitHub Pages from ignoring underscores or TeaVM submodules
+          touch site_output/.nojekyll
 
       - name: Upload Artifact to GitHub Pages
         uses: actions/upload-pages-artifact@v3

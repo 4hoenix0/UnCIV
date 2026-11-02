@@ -38,24 +38,27 @@ jobs:
       - name: Setup Gradle Cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Compile HTML Target via TeaVM
+      - name: Build Web Target via TeaVM
         run: |
           chmod +x gradlew
-          ./gradlew dist
+          ./gradlew :teavm:build
 
-      - name: Locate and Prepare Dist Directory
+      - name: Prepare Deployment Directory
         run: |
-          # Find the exact folder containing index.html
-          INDEX_PATH=$(find . -maxdepth 5 -name "index.html" | grep -v "\.gradle" | head -n 1)
-          DIST_DIR=$(dirname "$INDEX_PATH")
-          
-          echo "Found index.html at: $INDEX_PATH"
-          echo "Copying from directory: $DIST_DIR"
-          
           mkdir -p site_output
-          cp -r "$DIST_DIR"/* site_output/
           
-          # Prevent GitHub Pages from ignoring underscores or TeaVM submodules
+          # Copy compiled TeaVM output files to deployment directory
+          if [ -d "teavm/build/teavm" ]; then
+            cp -r teavm/build/teavm/* site_output/
+          elif [ -d "teavm/build/dist" ]; then
+            cp -r teavm/build/dist/* site_output/
+          else
+            # Fallback search for built teavm assets
+            TARGET=$(find teavm/build -type f -name "index.html" | head -n 1)
+            cp -r $(dirname "$TARGET")/* site_output/
+          fi
+          
+          # Prevent GitHub Pages from ignoring hidden files or TeaVM submodules
           touch site_output/.nojekyll
 
       - name: Upload Artifact to GitHub Pages

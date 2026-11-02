@@ -43,10 +43,17 @@ jobs:
           chmod +x gradlew
           ./gradlew dist
 
+      - name: Locate and Prepare Dist Directory
+        run: |
+          DIST_PATH=$(find . -maxdepth 4 -type d -name "dist" | grep -v "\.gradle" | head -n 1)
+          echo "Found build output at: $DIST_PATH"
+          mkdir -p site_output
+          cp -r $DIST_PATH/* site_output/
+
       - name: Upload Artifact to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'build/dist'
+          path: 'site_output'
 
       - name: Deploy to GitHub Pages
         id: deployment

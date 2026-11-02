@@ -1,0 +1,53 @@
+name: Auto Update & Deploy Unciv Web Build
+
+on:
+  schedule:
+    # Runs automatically every day at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows manual one-click updates anytime
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Upstream Unciv Source Code
+        uses: actions/checkout@v4
+        with:
+          repository: 'yairm210/Unciv'
+          fetch-depth: 1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Compile HTML Target via TeaVM
+        run: |
+          chmod +x gradlew
+          ./gradlew html:dist
+
+      - name: Upload Artifact to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'html/build/dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

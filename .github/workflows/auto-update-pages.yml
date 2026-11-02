@@ -37,15 +37,16 @@ jobs:
       - name: Setup Gradle Cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Compile HTML Target
+      - name: Compile HTML Target via TeaVM
         run: |
           chmod +x gradlew
-          ./gradlew html:dist || ./gradlew dist
+          ./gradlew teavm:build || ./gradlew html5:build || ./gradlew dist
 
       - name: Locate and Prepare Dist Directory
         run: |
           mkdir -p site_output
-          # Dynamically search for index.html anywhere in the project build outputs
+          
+          # Search specifically for index.html in build outputs
           INDEX_FILE=$(find . -name "index.html" -not -path "*/.*" | head -n 1)
           
           if [ -n "$INDEX_FILE" ]; then
@@ -53,11 +54,12 @@ jobs:
             echo "Found index.html at: $INDEX_FILE"
             cp -r "$DIST_DIR"/* site_output/
           else
-            echo "Error: index.html not found in build output!"
+            echo "Error: index.html still not found. Listing build directories for debugging:"
+            find . -type d -name "*build*"
             exit 1
           fi
           
-          # Prevent GitHub Pages from filtering WebGL/JS assets via Jekyll
+          # Prevent GitHub Pages from ignoring WebGL/JS assets via Jekyll
           touch site_output/.nojekyll
 
       - name: Upload Artifact to GitHub Pages

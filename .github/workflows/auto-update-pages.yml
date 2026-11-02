@@ -41,12 +41,12 @@ jobs:
       - name: Compile HTML Target via TeaVM
         run: |
           chmod +x gradlew
-          ./gradlew html:dist
+          ./gradlew teavm:dist
 
       - name: Upload Artifact to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'html/build/dist'
+          path: 'teavm/build/dist'
 
       - name: Deploy to GitHub Pages
         id: deployment

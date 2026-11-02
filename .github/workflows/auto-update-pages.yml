@@ -2,9 +2,8 @@ name: Auto Update & Deploy Unciv Web Build
 
 on:
   schedule:
-    # Runs automatically every day at 00:00 UTC
     - cron: '0 0 * * *'
-  workflow_dispatch: # Allows manual one-click updates anytime
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -38,27 +37,27 @@ jobs:
       - name: Setup Gradle Cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build Web Target via TeaVM
+      - name: Compile HTML Target
         run: |
           chmod +x gradlew
-          ./gradlew :teavm:build
+          ./gradlew html:dist || ./gradlew dist
 
-      - name: Prepare Deployment Directory
+      - name: Locate and Prepare Dist Directory
         run: |
           mkdir -p site_output
+          # Dynamically search for index.html anywhere in the project build outputs
+          INDEX_FILE=$(find . -name "index.html" -not -path "*/.*" | head -n 1)
           
-          # Copy compiled TeaVM output files to deployment directory
-          if [ -d "teavm/build/teavm" ]; then
-            cp -r teavm/build/teavm/* site_output/
-          elif [ -d "teavm/build/dist" ]; then
-            cp -r teavm/build/dist/* site_output/
+          if [ -n "$INDEX_FILE" ]; then
+            DIST_DIR=$(dirname "$INDEX_FILE")
+            echo "Found index.html at: $INDEX_FILE"
+            cp -r "$DIST_DIR"/* site_output/
           else
-            # Fallback search for built teavm assets
-            TARGET=$(find teavm/build -type f -name "index.html" | head -n 1)
-            cp -r $(dirname "$TARGET")/* site_output/
+            echo "Error: index.html not found in build output!"
+            exit 1
           fi
           
-          # Prevent GitHub Pages from ignoring hidden files or TeaVM submodules
+          # Prevent GitHub Pages from filtering WebGL/JS assets via Jekyll
           touch site_output/.nojekyll
 
       - name: Upload Artifact to GitHub Pages
